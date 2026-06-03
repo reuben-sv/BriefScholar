@@ -1,7 +1,7 @@
 import React from "react";
 import { Award, ShieldAlert, Send } from "lucide-react";
 
-export default function ChatTab({ messages, input, setInput, onSend }) {
+export default function ChatTab({ messages, input, setInput, onSend, isSending }) {
 	return (
 		<div className="content-wrapper">
 			<div className="chat-container">
@@ -70,10 +70,11 @@ export default function ChatTab({ messages, input, setInput, onSend }) {
 						type="text"
 						value={input}
 						onChange={(e) => setInput(e.target.value)}
-						placeholder="Ask a specific contextual framework item..."
+						placeholder={isSending ? "Waiting for answer..." : "Ask a question about the uploaded paper..."}
 						className="chat-input"
+						disabled={isSending}
 					/>
-					<button type="submit" className="chat-submit">
+					<button type="submit" className="chat-submit" disabled={isSending}>
 						<Send size={16} />
 					</button>
 				</form>

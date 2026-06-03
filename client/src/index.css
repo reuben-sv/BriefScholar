@@ -452,3 +452,9 @@
 .chat-submit:hover {
 	background: var(--primary-hover);
 }
+
+.chat-submit:disabled,
+.chat-input:disabled {
+	cursor: not-allowed;
+	opacity: 0.65;
+}
