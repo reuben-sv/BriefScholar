@@ -1,5 +1,4 @@
 from modules.groq_client import GroqClient
-from modules.pdf_extractor import split_text_into_chunks
 
 
 class PaperSimplifier:
@@ -7,8 +6,7 @@ class PaperSimplifier:
         self.groq = GroqClient()
 
     def summarize_paper(self, paper_text: str) -> str:
-        chunks = split_text_into_chunks(paper_text, chunk_size=2500)
-        selected_text = " ".join(chunks[:3])
+        selected_text = self._limit_text(paper_text, max_chars=5000)
 
         system_prompt = """
         You are an academic assistant. Explain research papers in simple, clear language for college students.
@@ -23,6 +21,7 @@ class PaperSimplifier:
 
         Output format:
         - Title/topic of the paper
+        - Authors
         - Main problem addressed
         - Simple summary
         - Main conclusion
@@ -31,7 +30,7 @@ class PaperSimplifier:
         return self.groq.generate_response(system_prompt, user_prompt)
 
     def key_contributions(self, paper_text: str) -> str:
-        selected_text = paper_text[:9000]
+        selected_text = self._limit_text(paper_text, max_chars=5500)
 
         system_prompt = "You are a research analysis assistant."
 
@@ -47,7 +46,7 @@ class PaperSimplifier:
         return self.groq.generate_response(system_prompt, user_prompt)
 
     def methodology_explanation(self, paper_text: str) -> str:
-        selected_text = paper_text[:9000]
+        selected_text = self._limit_text(paper_text, max_chars=5500)
 
         system_prompt = """
         You explain technical methodology sections in simple student-friendly language.
@@ -69,7 +68,7 @@ class PaperSimplifier:
         return self.groq.generate_response(system_prompt, user_prompt)
 
     def future_scope(self, paper_text: str) -> str:
-        selected_text = paper_text[:9000]
+        selected_text = self._limit_text(paper_text, max_chars=5500)
 
         system_prompt = "You are a research assistant who suggests realistic future work based on a paper."
 
@@ -85,7 +84,7 @@ class PaperSimplifier:
         return self.groq.generate_response(system_prompt, user_prompt)
 
     def viva_questions(self, paper_text: str) -> str:
-        selected_text = paper_text[:9000]
+        selected_text = self._limit_text(paper_text, max_chars=5500)
 
         system_prompt = """
         You create viva questions for students based on research papers.
@@ -112,3 +111,19 @@ class PaperSimplifier:
             "future_scope": self.future_scope(paper_text),
             "viva_questions": self.viva_questions(paper_text),
         }
+
+    def _limit_text(self, paper_text: str, max_chars: int) -> str:
+        if len(paper_text) <= max_chars:
+            return paper_text
+
+        selected_text = paper_text[:max_chars]
+        last_sentence_end = max(
+            selected_text.rfind("."),
+            selected_text.rfind("?"),
+            selected_text.rfind("!"),
+        )
+
+        if last_sentence_end > max_chars * 0.7:
+            return selected_text[: last_sentence_end + 1]
+
+        return selected_text

@@ -15,7 +15,13 @@ class GroqClient:
         self.client = Groq(api_key=api_key)
         self.model = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
 
-    def generate_response(self, system_prompt: str, user_prompt: str, temperature: float = 0.3) -> str:
+    def generate_response(
+        self,
+        system_prompt: str,
+        user_prompt: str,
+        temperature: float = 0.3,
+        max_tokens: int = 800,
+    ) -> str:
         """
         Generate response using Groq Chat Completions API.
         """
@@ -33,7 +39,7 @@ class GroqClient:
                     }
                 ],
                 temperature=temperature,
-                max_tokens=1200
+                max_tokens=max_tokens
             )
 
             return response.choices[0].message.content.strip()
