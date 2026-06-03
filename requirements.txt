@@ -1,6 +1,10 @@
 fastapi
 uvicorn[standard]
-python-multipart
+groq
 python-dotenv
 pdfplumber
-groq
+python-multipart
+pydantic
+
+# Optional utilities
+requests
