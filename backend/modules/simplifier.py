@@ -1,4 +1,4 @@
-from modules.groq_client import GroqClient
+from backend.modules.groq_client import GroqClient
 
 
 class PaperSimplifier:

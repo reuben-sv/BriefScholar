@@ -1,5 +1,5 @@
-from modules.simplifier import PaperSimplifier
-from modules.chatbot import PaperChatbot
+from backend.modules.chatbot import PaperChatbot
+from backend.modules.simplifier import PaperSimplifier
 
 sample_text = """
 This paper proposes a machine learning-based method for detecting plant diseases

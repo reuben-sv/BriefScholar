@@ -1,4 +1,5 @@
 import os
+
 from dotenv import load_dotenv
 from groq import Groq
 
@@ -31,15 +32,15 @@ class GroqClient:
                 messages=[
                     {
                         "role": "system",
-                        "content": system_prompt
+                        "content": system_prompt,
                     },
                     {
                         "role": "user",
-                        "content": user_prompt
-                    }
+                        "content": user_prompt,
+                    },
                 ],
                 temperature=temperature,
-                max_tokens=max_tokens
+                max_tokens=max_tokens,
             )
 
             return response.choices[0].message.content.strip()

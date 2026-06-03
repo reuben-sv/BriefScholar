@@ -4,10 +4,10 @@ from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-from modules.chatbot import PaperChatbot
-from modules.core_insights import CoreInsightsBrief
-from modules.core_viva import CoreViva
-from modules.pdf_extractor import extract_text_from_pdf
+from backend.modules.chatbot import PaperChatbot
+from backend.modules.core_insights import CoreInsightsBrief
+from backend.modules.core_viva import CoreViva
+from backend.modules.pdf_extractor import extract_text_from_pdf
 
 
 app = FastAPI(title="BriefScholar API")
@@ -20,11 +20,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Stores original extracted text
 documents: dict[str, str] = {}
-
-# Stores chatbot/RAG engine for each uploaded document
-chatbots: dict[str, PaperChatbot] = {}
 
 
 class ChatRequest(BaseModel):
@@ -59,40 +55,27 @@ async def upload_pdf(file: UploadFile = File(...)) -> dict[str, str | int]:
         raise HTTPException(status_code=400, detail="No readable text was found in this PDF.")
 
     document_id = str(uuid4())
-
-    # Store extracted text
     documents[document_id] = text
-
-    # Create RAG chatbot for this specific document
-    chatbot = PaperChatbot()
-    rag_status = chatbot.prepare_paper(text)
-
-    # Store chatbot object using document_id
-    chatbots[document_id] = chatbot
 
     return {
         "document_id": document_id,
         "filename": file.filename or "uploaded.pdf",
         "characters": len(text),
         "preview": text[:500],
-        "chunks": rag_status["total_chunks"],
     }
 
 
 @app.post("/chat")
 def chat(request: ChatRequest) -> dict[str, str]:
-    if request.document_id not in documents:
+    paper_text = documents.get(request.document_id)
+    if not paper_text:
         raise HTTPException(status_code=404, detail="Uploaded paper was not found.")
 
     if not request.question.strip():
         raise HTTPException(status_code=400, detail="Question cannot be empty.")
 
-    chatbot = chatbots.get(request.document_id)
-
-    if chatbot is None:
-        raise HTTPException(status_code=500, detail="RAG chatbot was not initialized for this paper.")
-
-    answer = chatbot.answer_question(request.question)
+    chatbot = PaperChatbot()
+    answer = chatbot.answer_question(request.question, paper_text)
 
     return {"answer": answer}
 

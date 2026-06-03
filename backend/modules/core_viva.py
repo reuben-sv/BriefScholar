@@ -1,7 +1,7 @@
 import re
 from typing import Any
 
-from modules.simplifier import PaperSimplifier
+from backend.modules.simplifier import PaperSimplifier
 
 
 class CoreViva:

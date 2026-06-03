@@ -1,5 +1,6 @@
-import pdfplumber
 import re
+
+import pdfplumber
 
 
 def extract_text_from_pdf(uploaded_file) -> str:
