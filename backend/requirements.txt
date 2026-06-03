@@ -5,6 +5,9 @@ python-dotenv
 pdfplumber
 python-multipart
 pydantic
+sentence_transformers
+faiss-cpu
+numpy
 
 # Optional utilities
 requests
