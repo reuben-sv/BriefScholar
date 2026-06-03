@@ -1,6 +1,7 @@
 import React from "react";
 
 export default function InsightsTab({ summary }) {
+	console.log("InsightsTab received summary:", summary);
 	return (
 		<div className="content-wrapper">
 			<div className="card">

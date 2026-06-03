@@ -5,6 +5,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from modules.chatbot import PaperChatbot
+from modules.core_insights import CoreInsightsBrief
+from modules.core_viva import CoreViva
 from modules.pdf_extractor import extract_text_from_pdf
 
 
@@ -28,6 +30,14 @@ chatbots: dict[str, PaperChatbot] = {}
 class ChatRequest(BaseModel):
     document_id: str
     question: str
+
+
+class InsightsRequest(BaseModel):
+    document_id: str
+
+
+class VivaRequest(BaseModel):
+    document_id: str
 
 
 @app.get("/health")
@@ -85,3 +95,23 @@ def chat(request: ChatRequest) -> dict[str, str]:
     answer = chatbot.answer_question(request.question)
 
     return {"answer": answer}
+
+
+@app.post("/insights")
+def insights(request: InsightsRequest) -> dict[str, str | list[str]]:
+    paper_text = documents.get(request.document_id)
+    if not paper_text:
+        raise HTTPException(status_code=404, detail="Uploaded paper was not found.")
+
+    brief = CoreInsightsBrief()
+    return brief.generate(paper_text)
+
+
+@app.post("/viva")
+def viva(request: VivaRequest) -> dict[str, list[dict[str, str | int]]]:
+    paper_text = documents.get(request.document_id)
+    if not paper_text:
+        raise HTTPException(status_code=404, detail="Uploaded paper was not found.")
+
+    viva_generator = CoreViva()
+    return {"questions": viva_generator.generate(paper_text)}

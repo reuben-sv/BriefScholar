@@ -14,6 +14,8 @@ export default function App() {
 	const [isProcessing, setIsProcessing] = useState(false);
 	const [documentId, setDocumentId] = useState(null);
 	const [isSending, setIsSending] = useState(false);
+	const [summary, setSummary] = useState(mockSummary);
+	const [vivaQuestions, setVivaQuestions] = useState(mockVivaQuestions);
 
 	// Chat States for the RAG Frame
 	const [chatMessages, setChatMessages] = useState([
@@ -52,13 +54,49 @@ export default function App() {
 				}
 
 				setDocumentId(data.document_id);
+
+				const insightsResponse = await fetch(`${API_BASE_URL}/insights`, {
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify({
+						document_id: data.document_id,
+					}),
+				});
+
+				const insightsData = await insightsResponse.json();
+
+				if (!insightsResponse.ok) {
+					throw new Error(insightsData.detail || "Core insights generation failed.");
+				}
+
+				setSummary(insightsData);
+
+				const vivaResponse = await fetch(`${API_BASE_URL}/viva`, {
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify({
+						document_id: data.document_id,
+					}),
+				});
+
+				const vivaData = await vivaResponse.json();
+
+				if (!vivaResponse.ok) {
+					throw new Error(vivaData.detail || "Viva generation failed.");
+				}
+
+				setVivaQuestions(vivaData.questions);
 				setChatMessages([
 					{
 						sender: "ai",
 						text: `I indexed "${data.filename}" (${data.characters.toLocaleString()} characters). Ask me a question about this paper.`,
 					},
 				]);
-				setActiveTab("chat");
+				setActiveTab("insights");
 			} catch (error) {
 				setUploadedFile(null);
 				setChatMessages((prev) => [
@@ -153,9 +191,9 @@ export default function App() {
 
 				{/* Dynamic Context Viewport */}
 				<div className="workspace">
-					{activeTab === "insights" && <InsightsTab summary={mockSummary} />}
+					{activeTab === "insights" && <InsightsTab summary={summary} />}
 
-					{activeTab === "viva" && <VivaTab questions={mockVivaQuestions} />}
+					{activeTab === "viva" && <VivaTab questions={vivaQuestions} />}
 
 					{activeTab === "chat" && (
 						<ChatTab
