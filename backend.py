@@ -18,7 +18,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Stores original extracted text
 documents: dict[str, str] = {}
+
+# Stores chatbot/RAG engine for each uploaded document
+chatbots: dict[str, PaperChatbot] = {}
 
 
 class ChatRequest(BaseModel):
@@ -45,26 +49,39 @@ async def upload_pdf(file: UploadFile = File(...)) -> dict[str, str | int]:
         raise HTTPException(status_code=400, detail="No readable text was found in this PDF.")
 
     document_id = str(uuid4())
+
+    # Store extracted text
     documents[document_id] = text
+
+    # Create RAG chatbot for this specific document
+    chatbot = PaperChatbot()
+    rag_status = chatbot.prepare_paper(text)
+
+    # Store chatbot object using document_id
+    chatbots[document_id] = chatbot
 
     return {
         "document_id": document_id,
         "filename": file.filename or "uploaded.pdf",
         "characters": len(text),
         "preview": text[:500],
+        "chunks": rag_status["total_chunks"],
     }
 
 
 @app.post("/chat")
 def chat(request: ChatRequest) -> dict[str, str]:
-    paper_text = documents.get(request.document_id)
-    if not paper_text:
+    if request.document_id not in documents:
         raise HTTPException(status_code=404, detail="Uploaded paper was not found.")
 
     if not request.question.strip():
         raise HTTPException(status_code=400, detail="Question cannot be empty.")
 
-    chatbot = PaperChatbot()
-    answer = chatbot.answer_question(request.question, paper_text)
+    chatbot = chatbots.get(request.document_id)
+
+    if chatbot is None:
+        raise HTTPException(status_code=500, detail="RAG chatbot was not initialized for this paper.")
+
+    answer = chatbot.answer_question(request.question)
 
     return {"answer": answer}
